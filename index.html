@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interactive Storybook Creator</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/all.min.css">
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2F2E41;
+            --bg: #F7FFF7;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Fredoka', sans-serif;
+            color: var(--primary);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* --- Landing Page --- */
+        #home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+        }
+
+        .hero-img {
+            width: 300px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .btn-large {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #d64545;
+            transition: all 0.2s;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .btn-large:hover {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #d64545;
+        }
+
+        /* --- Form Screen --- */
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .hidden { display: none; }
+
+        /* --- Book Reader --- */
+        .book-container {
+            perspective: 1500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            min-height: 500px;
+        }
+
+        .book {
+            width: 100%;
+            max-width: 600px;
+            height: 500px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            padding: 40px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+        }
+
+        .page.active {
+            display: flex;
+            animation: flipIn 0.6s ease-out;
+        }
+
+        @keyframes flipIn {
+            from { transform: rotateY(-90deg); opacity: 0; }
+            to { transform: rotateY(0deg); opacity: 1; }
+        }
+
+        .illustration {
+            width: 100%;
+            height: 250px;
+            background: #eee;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+
+        .moral-value {
+            margin-top: auto;
+            background: #e0f7fa;
+            padding: 10px;
+            border-left: 5px solid var(--secondary);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-control {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: var(--secondary);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* --- Loading Animation --- */
+        #loading-screen {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .book { height: 450px; }
+            .btn-large { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Muka Depan (Landing Page) -->
+    <section id="home-screen">
+        <img src="https://cdn-icons-png.flaticon.com/512/3532/3532351.png" alt="Book Icon" class="hero-img">
+        <h1>Cipta Buku Cerita Saya</h1>
+        <p>Mari gunakan imaginasi anda dan AI untuk membina buku cerita yang hebat!</p>
+        <button class="btn-large" onclick="showScreen('form-screen')">Mula Mencipta! <i class="fas fa-magic"></i></button>
+    </section>
+
+    <!-- Borang Cipta (Form Screen) -->
+    <section id="form-screen" class="hidden">
+        <div class="card">
+            <h2><i class="fas fa-pencil-alt"></i> Butiran Cerita Anda</h2>
+            <div class="form-group">
+                <label>Tajuk Cerita:</label>
+                <input type="text" id="story-title" placeholder="Contoh: Kura-kura yang Berani">
+            </div>
+            <div class="form-group">
+                <label>Umur Murid:</label>
+                <select id="story-age">
+                    <option value="5-7">5 - 7 Tahun</option>
+                    <option value="8-10">8 - 10 Tahun</option>
+                    <option value="11-12">11 - 12 Tahun</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tema Cerita:</label>
+                <select id="story-theme">
+                    <option value="Persahabatan">Persahabatan</option>
+                    <option value="Kejujuran">Kejujuran</option>
+                    <option value="Hormat-menghormati">Hormat-menghormati</option>
+                    <option value="Kasih sayang keluarga">Kasih sayang keluarga</option>
+                    <option value="Menjaga alam sekitar">Menjaga alam sekitar</option>
+                    <option value="Haiwan">Haiwan</option>
+                    <option value="Sains">Sains</option>
+                    <option value="Akhlak mulia">Akhlak mulia</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Jumlah Halaman:</label>
+                <select id="story-pages">
+                    <option value="5">5 Halaman</option>
+                    <option value="10">10 Halaman</option>
+                    <option value="15">15 Halaman</option>
+                </select>
+            </div>
+            <button class="btn-large" style="width: 100%;" onclick="generateStory()">Jana Buku <i class="fas fa-sparkles"></i></button>
+            <button class="btn-control" style="background: gray; margin-top: 10px;" onclick="showScreen('home-screen')">Kembali</button>
+        </div>
+    </section>
+
+    <!-- Loading Screen -->
+    <section id="loading-screen" class="hidden">
+        <div class="spinner"></div>
+        <h2>AI sedang menulis cerita anda...</h2>
+        <p>Sila tunggu sebentar, kami sedang melukis gambar kartun juga!</p>
+    </section>
+
+    <!-- Paparan Buku (Reader Screen) -->
+    <section id="reader-screen" class="hidden">
+        <h2 id="display-title">Tajuk Buku</h2>
+        
+        <div class="book-container">
+            <div id="book" class="book">
+                <!-- Pages will be injected here by JS -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-control" onclick="prevPage()"><i class="fas fa-arrow-left"></i> Sebelum</button>
+            <button class="btn-control" onclick="nextPage()">Seterusnya <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-control" style="background: #FF9F43;" onclick="speakText()"><i class="fas fa-volume-up"></i> Baca Kuat</button>
+            <button class="btn-control" style="background: #27ae60;" onclick="savePDF()"><i class="fas fa-file-pdf"></i> Muat Turun</button>
+            <button class="btn-control" style="background: #e74c3c;" onclick="location.reload()"><i class="fas fa-home"></i> Mula Baru</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <label>Muzik Latar:</label>
+            <audio id="bg-music" loop controls style="height: 30px;">
+                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    let currentStory = [];
+    let currentPageIndex = 0;
+
+    function showScreen(screenId) {
+        document.getElementById('home-screen').classList.add('hidden');
+        document.getElementById('form-screen').classList.add('hidden');
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('reader-screen').classList.add('hidden');
+        
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    async function generateStory() {
+        const title = document.getElementById('story-title').value || "Cerita Saya";
+        const theme = document.getElementById('story-theme').value;
+        const age = document.getElementById('story-age').value;
+        const pageCount = parseInt(document.getElementById('story-pages').value);
+
+        showScreen('loading-screen');
+
+        // Simulasi Proses AI selama 3 saat
+        setTimeout(() => {
+            currentStory = createStoryData(title, theme, age, pageCount);
+            renderBook();
+            showScreen('reader-screen');
+        }, 3000);
+    }
+
+    function createStoryData(title, theme, age, count) {
+        const pages = [];
+        // Muka Hadapan
+        pages.push({
+            sub: "Muka Hadapan",
+            text: `Selamat datang ke buku "${title}". Sebuah kisah tentang ${theme} yang sangat menarik!`,
+            img: `https://loremflickr.com/600/400/cartoon,${theme}`,
+            moral: "Mari kita mulakan membaca!"
+        });
+
+        // Halaman Cerita (Simulasi kandungan)
+        for (let i = 1; i < count; i++) {
+            pages.push({
+                sub: `Bahagian ${i}`,
+                text: generateSimpleText(theme, age, i),
+                img: `https://loremflickr.com/600/400/cartoon,${theme},child?random=${i}`,
+                moral: `Nilai: Sentiasa amalkan ${theme} dalam kehidupan.`
+            });
+        }
+
+        // Halaman Penutup
+        pages.push({
+            sub: "Tamat",
+            text: `Demikianlah kisah ${title}. Semoga kita semua mendapat pengajaran yang baik daripada cerita ini. Terima kasih kerana membaca!`,
+            img: `https://loremflickr.com/600/400/cartoon,happy`,
+            moral: `Pengajaran Utama: ${theme} adalah kunci kebahagiaan.`
+        });
+
+        return pages;
+    }
+
+    function generateSimpleText(theme, age, step) {
+        const texts = {
+            "Persahabatan": ["Pada suatu hari, ada dua sahabat baik.", "Mereka selalu bermain bersama di taman.", "Tiba-tiba, satu masalah berlaku.", "Tetapi mereka saling membantu.", "Akhirnya mereka gembira!"],
+            "Haiwan": ["Di dalam hutan yang hijau, tinggal seekor haiwan.", "Ia sangat suka makan buah-buahan.", "Suatu hari ia bertemu kawan baru.", "Mereka berjalan-jalan mengelilingi hutan.", "Semua haiwan hidup aman."],
+            "Sains": ["Adakah anda tahu bagaimana hujan turun?", "Air laut naik ke langit menjadi awan.", "Awan menjadi berat dan sejuk.", "Lalu turunlah titisan air ke bumi.", "Itulah kitaran air yang hebat!"]
+        };
+        
+        let baseText = texts[theme] ? texts[theme][step % 5] : `Ini adalah kisah tentang ${theme} yang berlaku pada zaman dahulu. Ia mengajar kita banyak perkara baru.`;
+        
+        if(age === "5-7") return baseText.substring(0, 50) + ".";
+        return baseText + " Cerita ini semakin menarik setiap minit.";
+    }
+
+    function renderBook() {
+        const book = document.getElementById('book');
+        const displayTitle = document.getElementById('display-title');
+        displayTitle.innerText = document.getElementById('story-title').value || "Buku Cerita Saya";
+        book.innerHTML = '';
+        currentPageIndex = 0;
+
+        currentStory.forEach((page, index) => {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = `page ${index === 0 ? 'active' : ''}`;
+            pageDiv.innerHTML = `
+                <h3>${page.sub}</h3>
+                <img src="${page.img}" class="illustration" alt="Gambar">
+                <p style="font-size: 1.2rem; line-height: 1.6;">${page.text}</p>
+                <div class="moral-value">${page.moral}</div>
+                <div style="text-align:right; font-weight:bold; margin-top:10px;">${index + 1} / ${currentStory.length}</div>
+            `;
+            book.appendChild(pageDiv);
+        });
+    }
+
+    function nextPage() {
+        if (currentPageIndex < currentStory.length - 1) {
+            document.querySelectorAll('.page')[currentPageIndex].classList.remove('active');
+            currentPageIndex++;
+            document.querySelectorAll('.page')[currentPageIndex].classList.add('active');
+            stopSpeaking();
+        }
+    }
+
+    function prevPage() {
+        if (currentPageIndex > 0) {
+            document.querySelectorAll('.page')[currentPageIndex].classList.remove('active');
+            currentPageIndex--;
+            document.querySelectorAll('.page')[currentPageIndex].classList.add('active');
+            stopSpeaking();
+        }
+    }
+
+    function speakText() {
+        const text = currentStory[currentPageIndex].text;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ms-MY'; // Set Bahasa Melayu
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function stopSpeaking() {
+        window.speechSynthesis.cancel();
+    }
+
+    function savePDF() {
+        alert("Fungsi Muat Turun PDF: Dalam versi demo ini, sila gunakan fungsi 'Print' (Ctrl+P) dan 'Save as PDF' pada pelayar anda.");
+    }
+</script>
+
+</body>
+</html>
